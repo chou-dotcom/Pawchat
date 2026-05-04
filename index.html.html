@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pawchat</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2D6A4F;
+    --green-mid: #40916C;
+    --green-light: #74C69D;
+    --green-pale: #D8F3DC;
+    --green-ultra: #F0FFF4;
+    --accent: #52B788;
+    --text: #1B2E23;
+    --text-mid: #4A6357;
+    --text-light: #8BA898;
+    --border: #C9E8D5;
+    --white: #FFFFFF;
+    --bg: #F4FAF6;
+    --card: #FFFFFF;
+    --nav-h: 68px;
+    --top-h: 56px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* Phone shell */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 50px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 10px #2a2a2a, 0 0 0 12px #3a3a3a;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 44px;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .status-bar .notch {
+    width: 120px; height: 34px;
+    background: #111;
+    border-radius: 0 0 20px 20px;
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    top: 0;
+  }
+
+  /* App container */
+  .app {
+    height: calc(844px - 44px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Screens */
+  .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* Top bar */
+  .top-bar {
+    height: var(--top-h);
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .top-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--green);
+  }
+  .top-icons { display: flex; gap: 16px; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  .icon-btn:active { transform: scale(0.9); }
+
+  /* Scroll content */
+  .scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-content::-webkit-scrollbar { display: none; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    height: var(--nav-h);
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-bottom: 8px;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: all 0.2s;
+  }
+  .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--text-light); }
+  .nav-item.active .nav-label { color: var(--green); }
+  .nav-item.active .nav-icon { transform: scale(1.1); }
+  .nav-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: #E74C3C;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 1px 4px;
+    min-width: 16px;
+    text-align: center;
+  }
+  .nav-icon-wrap { position: relative; }
+
+  /* ════════════════════════════════
+     SCREEN: MAP
+  ════════════════════════════════ */
+  #screen-map .top-bar { background: var(--white); }
+
+  .map-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #E8F5E9;
+  }
+
+  /* SVG map background */
+  .map-svg {
+    width: 100%; height: 100%;
+    position: absolute; top: 0; left: 0;
+  }
+
+  /* Location toggle */
+  .loc-toggle {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: white;
+    border-radius: 20px;
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    z-index: 20;
+  }
+  .loc-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green-light);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(116,198,157,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(116,198,157,0); }
+  }
+
+  /* Paw Party button */
+  .paw-party-btn {
+    position: absolute;
+    bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(45,106,79,0.4);
+    z-index: 20;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .paw-party-btn:active { transform: translateX(-50%) scale(0.96); }
+
+  /* Dog bubbles on map */
+  .dog-bubble {
+    position: absolute;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--green-light);
+    font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.2s;
+  }
+  .dog-bubble:active { transform: scale(1.1); }
+  .dog-bubble.me {
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(45,106,79,0.2);
+  }
+  .dog-bubble.followed { border-color: #F4A261; }
+  .bubble-label {
+    position: absolute;
+    bottom: -20px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  /* Group pin on map */
+  .group-pin {
+    position: absolute;
+    background: var(--green);
+    color: white;
+    border-radius: 12px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; gap: 4px;
+    box-shadow: 0 3px 10px rgba(45,106,79,0.4);
+    cursor: pointer;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  .group-pin::after {
+    content: '';
+    position: absolute;
+    bottom: -6px; left: 50%; transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--green);
+    border-bottom: none;
+  }
+
+  /* Preview card overlay */
+  .preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 30;
+    display: none;
+    align-items: flex-end;
+    padding: 16px;
+  }
+  .preview-overlay.active { display: flex; }
+
+  .preview-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    width: 100%;
+    animation: slide-up 0.3s ease;
+  }
+  @keyframes slide-up {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .preview-card-header { display: flex; gap: 14px; margin-bottom: 14px; }
+  .preview-dog-photo {
+    width: 72px; height: 72px;
+    border-radius: 16px;
+    background: var(--green-pale);
+    font-size: 36px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .preview-info { flex: 1; }
+  .preview-dog-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--text); margin-bottom: 2px;
+  }
+  .preview-dog-meta { font-size: 12px; color: var(--text-light); margin-bottom: 8px; }
+  .preview-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preview-tag {
+    background: var(--green-pale);
+    color: var(--green);
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 8px;
+  }
+  .preview-owner {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .owner-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .owner-name { font-size: 13px; font-weight: 600; color: var(--text-mid); }
+  .owner-location { font-size: 11px; color: var(--text-light); }
+  .preview-actions { display: flex; gap: 10px; }
+  .btn-follow {
+    flex: 1; padding: 10px;
+    background: var(--green-pale);
+    color: var(--green);
+    border: none; border-radius: 12px;
+    font-weight: 700; font-size: 14px;
+    cursor: pointer;
+  }
+  .btn-sayhi {
+    flex: 1; padding: 10px;
+    background: var(--green);
+    color: white;
+    border: none; border-radius: 12px;
+    font-weight: 700; font-size: 14px;
+    cursor: pointer;
+  }
+  .btn-close-preview {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: rgba(255,255,255,0.9);
+    border: none; border-radius: 50%;
+    width: 28px; height: 28px;
+    font-size: 14px; cursor: pointer;
+  }
+
+  /* Paw Party Modal */
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 50;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-sheet {
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    animation: slide-up 0.3s ease;
+  }
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .modal-sub { font-size: 13px; color: var(--text-light); margin-bottom: 20px; }
+  .radius-options { display: flex; gap: 10px; margin-bottom: 20px; }
+  .radius-opt {
+    flex: 1; padding: 10px 0;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-mid);
+    transition: all 0.2s;
+  }
+  .radius-opt.selected {
+    border-color: var(--green);
+    background: var(--green-pale);
+    color: var(--green);
+  }
+  .modal-btn {
+    width: 100%; padding: 14px;
+    background: var(--green);
+    color: white;
+    border: none; border-radius: 16px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 16px;
+    cursor: pointer;
+  }
+  .modal-cancel {
+    width: 100%; padding: 12px;
+    background: none;
+    color: var(--text-light);
+    border: none;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer; margin-top: 10px;
+  }
+
+  /* ════════════════════════════════
+     SCREEN: DISCUSSION
+  ════════════════════════════════ */
+  .filter-bar {
+    background: white;
+    padding: 10px 16px;
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    background: var(--bg);
+    color: var(--text-mid);
+    border: 1.5px solid var(--border);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .filter-chip.active {
+    background: var(--green);
+    color: white;
+    border-color: var(--green);
+  }
+
+  /* Lost & Found pinned banner */
+  .lost-banner {
+    background: #FFF3CD;
+    border-left: 4px solid #F4A261;
+    margin: 12px 16px 0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .lost-banner-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .lost-badge {
+    background: #F4A261;
+    color: white;
+    font-size: 10px; font-weight: 800;
+    padding: 2px 7px; border-radius: 6px;
+  }
+  .lost-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .lost-sub { font-size: 11px; color: var(--text-light); }
+
+  /* Post card */
+  .post-card {
+    background: white;
+    margin: 10px 16px 0;
+    border-radius: 16px;
+    padding: 14px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .post-card:active { transform: scale(0.99); }
+  .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .post-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid var(--green-light);
+  }
+  .post-meta { flex: 1; }
+  .post-dog-name { font-size: 14px; font-weight: 700; color: var(--green); }
+  .post-time { font-size: 11px; color: var(--text-light); }
+  .post-tag-chip {
+    background: var(--green-pale);
+    color: var(--green);
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 8px;
+  }
+  .post-text { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 10px; }
+  .post-img {
+    width: 100%; height: 160px;
+    background: var(--green-pale);
+    border-radius: 12px;
+    font-size: 60px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .post-footer { display: flex; gap: 16px; }
+  .post-action { font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: calc(var(--nav-h) + 16px);
+    right: 16px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--green);
+    color: white;
+    font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(45,106,79,0.4);
+    cursor: pointer;
+    z-index: 20;
+    border: none;
+    transition: all 0.2s;
+  }
+  .fab:active { transform: scale(0.92); }
+
+  /* Post Detail */
+  .post-detail { display: none; flex-direction: column; position: absolute; inset: 0; background: var(--bg); z-index: 40; }
+  .post-detail.active { display: flex; }
+  .detail-top {
+    height: var(--top-h);
+    background: white;
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .back-btn { font-size: 20px; cursor: pointer; color: var(--green); }
+  .detail-title { font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); }
+
+  /* ════════════════════════════════
+     SCREEN: PROFILE
+  ════════════════════════════════ */
+  .profile-hero {
+    background: white;
+    padding: 20px 20px 0;
+    flex-shrink: 0;
+  }
+  .profile-top { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+  .profile-photo {
+    width: 80px; height: 80px;
+    border-radius: 20px;
+    background: var(--green-pale);
+    font-size: 44px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 3px solid var(--green-light);
+  }
+  .profile-info { flex: 1; }
+  .profile-dog-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 24px; font-weight: 900;
+    color: var(--text); margin-bottom: 2px;
+  }
+  .profile-breed { font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
+  .profile-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .profile-tag {
+    background: var(--green-pale);
+    color: var(--green);
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 10px;
+  }
+  .profile-owner-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+  .profile-owner-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .profile-owner-name { font-size: 13px; font-weight: 600; color: var(--text-mid); }
+  .profile-owner-sub { font-size: 11px; color: var(--text-light); margin-left: auto; }
+
+  .profile-stats {
+    background: white;
+    display: flex;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-stat {
+    flex: 1; text-align: center;
+    padding: 12px 0;
+  }
+  .profile-stat + .profile-stat { border-left: 1px solid var(--border); }
+  .stat-num {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 900; color: var(--text);
+  }
+  .stat-label { font-size: 11px; color: var(--text-light); }
+
+  .profile-actions {
+    background: white;
+    padding: 12px 20px;
+    display: flex; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .btn-edit {
+    flex: 1; padding: 10px;
+    background: var(--green-pale);
+    color: var(--green);
+    border: none; border-radius: 12px;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  .btn-msg {
+    padding: 10px 16px;
+    background: var(--green);
+    color: white;
+    border: none; border-radius: 12px;
+    font-size: 18px; cursor: pointer;
+  }
+
+  /* Photo grid */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 2px;
+  }
+  .photo-cell {
+    aspect-ratio: 1;
+    background: var(--green-pale);
+    font-size: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .photo-cell:active { opacity: 0.8; }
+
+  /* ════════════════════════════════
+     SCREEN: MESSAGES
+  ════════════════════════════════ */
+  .msg-request-banner {
+    background: var(--green-ultra);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+  .msg-request-left { display: flex; align-items: center; gap: 10px; }
+  .msg-request-badge {
+    background: var(--green);
+    color: white;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .msg-request-text { font-size: 14px; font-weight: 700; color: var(--text); }
+  .msg-request-sub { font-size: 11px; color: var(--text-light); }
+  .msg-request-arrow { color: var(--text-light); font-size: 16px; }
+
+  .msg-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--bg);
+    cursor: pointer;
+    background: white;
+    transition: background 0.15s;
+  }
+  .msg-item:active { background: var(--bg); }
+  .msg-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid var(--green-light);
+    position: relative;
+  }
+  .msg-avatar.group { border-radius: 14px; }
+  .msg-meta { flex: 1; min-width: 0; }
+  .msg-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .msg-preview { font-size: 12px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .msg-time { font-size: 11px; color: var(--text-light); }
+  .unread-badge {
+    background: var(--green);
+    color: white;
+    border-radius: 10px;
+    font-size: 11px; font-weight: 800;
+    padding: 1px 6px;
+    min-width: 18px; text-align: center;
+  }
+
+  /* Chat screen */
+  .chat-screen {
+    display: none; flex-direction: column;
+    position: absolute; inset: 0;
+    background: var(--bg); z-index: 40;
+  }
+  .chat-screen.active { display: flex; }
+  .chat-top {
+    background: white;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+  .chat-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .chat-bubble.them {
+    background: white;
+    color: var(--text);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .chat-bubble.me {
+    background: var(--green);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-input-row {
+    background: white;
+    padding: 10px 16px;
+    display: flex; gap: 10px; align-items: center;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .chat-input {
+    flex: 1; padding: 10px 16px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 24px;
+    font-size: 14px; color: var(--text);
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .chat-send {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--green);
+    color: white; border: none;
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ════════════════════════════════
+     ONBOARDING
+  ════════════════════════════════ */
+  #screen-onboarding {
+    background: var(--green);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    text-align: center;
+  }
+  .splash-logo {
+    font-family: 'Nunito', sans-serif;
+    font-size: 48px; font-weight: 900;
+    color: white; margin-bottom: 8px;
+  }
+  .splash-tagline { font-size: 16px; color: rgba(255,255,255,0.85); margin-bottom: 48px; line-height: 1.5; }
+  .splash-paw { font-size: 80px; margin-bottom: 32px; }
+  .btn-apple {
+    width: 100%; padding: 14px;
+    background: white; color: var(--text);
+    border: none; border-radius: 16px;
+    font-weight: 700; font-size: 15px;
+    cursor: pointer; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-google {
+    width: 100%; padding: 14px;
+    background: rgba(255,255,255,0.15); color: white;
+    border: 2px solid rgba(255,255,255,0.4); border-radius: 16px;
+    font-weight: 700; font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* Onboarding cards */
+  #screen-cards {
+    background: white;
+    display: flex; flex-direction: column;
+  }
+  .card-progress {
+    display: flex; gap: 6px;
+    padding: 16px 24px 0;
+    justify-content: center;
+  }
+  .card-dot {
+    height: 4px; border-radius: 2px;
+    background: var(--border);
+    flex: 1; max-width: 60px;
+    transition: background 0.3s;
+  }
+  .card-dot.active { background: var(--green); }
+  .card-content {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 32px; text-align: center;
+  }
+  .card-emoji { font-size: 72px; margin-bottom: 24px; }
+  .card-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 26px; font-weight: 900;
+    color: var(--text); margin-bottom: 12px;
+  }
+  .card-desc { font-size: 15px; color: var(--text-light); line-height: 1.6; }
+  .card-actions { padding: 24px 24px 32px; display: flex; gap: 12px; }
+  .btn-skip { flex: 1; padding: 14px; background: var(--bg); color: var(--text-light); border: none; border-radius: 16px; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .btn-next { flex: 2; padding: 14px; background: var(--green); color: white; border: none; border-radius: 16px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; }
+
+  /* Notification toast */
+  .toast {
+    position: absolute;
+    top: 60px; left: 16px; right: 16px;
+    background: var(--text);
+    color: white;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 100;
+    display: none;
+    animation: fade-in-out 3s ease forwards;
+  }
+  .toast.active { display: flex; align-items: center; gap: 10px; }
+  @keyframes fade-in-out {
+    0% { opacity: 0; transform: translateY(-8px); }
+    15% { opacity: 1; transform: translateY(0); }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-8px); }
+  }
+
+  /* Search bar */
+  .search-bar {
+    padding: 10px 16px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .search-input {
+    width: 100%; padding: 10px 16px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px; color: var(--text);
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .search-input::placeholder { color: var(--text-light); }
+
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="notch"></div>
+    <span>9:41</span>
+    <span style="opacity:0">spacer</span>
+    <span>●●● 5G 🔋</span>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast">🐾 <span id="toast-text"></span></div>
+
+  <div class="app">
+
+    <!-- ══════════════════════════════════
+         ONBOARDING SPLASH
+    ══════════════════════════════════ -->
+    <div class="screen active" id="screen-onboarding" style="flex-direction:column">
+      <div class="splash-paw">🐾</div>
+      <div class="splash-logo">Pawchat</div>
+      <div class="splash-tagline">Find dogs near you.<br>More playdates, happier dogs.</div>
+      <button class="btn-apple" onclick="goToCards()">🍎 &nbsp;Continue with Apple</button>
+      <button class="btn-google" onclick="goToCards()">G &nbsp;Continue with Google</button>
+    </div>
+
+    <!-- ══════════════════════════════════
+         ONBOARDING CARDS
+    ══════════════════════════════════ -->
+    <div class="screen" id="screen-cards" style="flex-direction:column">
+      <div class="card-progress">
+        <div class="card-dot active" id="dot-0"></div>
+        <div class="card-dot" id="dot-1"></div>
+        <div class="card-dot" id="dot-2"></div>
+      </div>
+      <div class="card-content" id="card-content">
+        <div class="card-emoji">🗺️</div>
+        <div class="card-title">See who's walking near Bella</div>
+        <div class="card-desc">Turn on your location when you're out and discover dogs in your neighborhood in real time.</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-skip" onclick="enterApp()">Skip</button>
+        <button class="btn-next" id="card-next-btn" onclick="nextCard()">Next →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         MAP SCREEN
+    ══════════════════════════════════ -->
+    <div class="screen" id="screen-map">
+      <div class="top-bar">
+        <div class="top-title">🐾 Pawchat</div>
+        <div class="top-icons">
+          <button class="icon-btn" onclick="showSearch()">🔍</button>
+          <button class="icon-btn" onclick="showMsg()">✉️</button>
+        </div>
+      </div>
+
+      <div class="map-area" style="position:relative">
+        <!-- Map SVG background -->
+        <svg class="map-svg" viewBox="0 0 390 580" xmlns="http://www.w3.org/2000/svg">
+          <!-- Base -->
+          <rect width="390" height="580" fill="#E8F5E9"/>
+          <!-- Roads -->
+          <rect x="0" y="180" width="390" height="18" fill="#C8E6C9" opacity="0.8"/>
+          <rect x="0" y="360" width="390" height="18" fill="#C8E6C9" opacity="0.8"/>
+          <rect x="120" y="0" width="18" height="580" fill="#C8E6C9" opacity="0.8"/>
+          <rect x="260" y="0" width="18" height="580" fill="#C8E6C9" opacity="0.8"/>
+          <!-- Park blob -->
+          <ellipse cx="195" cy="280" rx="90" ry="70" fill="#A5D6A7" opacity="0.6"/>
+          <ellipse cx="195" cy="280" rx="90" ry="70" fill="none" stroke="#81C784" stroke-width="2" stroke-dasharray="6,4" opacity="0.7"/>
+          <text x="195" y="285" text-anchor="middle" font-size="11" fill="#2D6A4F" font-weight="700" opacity="0.8">Green Lake Park</text>
+          <!-- Water -->
+          <ellipse cx="60" cy="420" rx="50" ry="35" fill="#B3E5FC" opacity="0.5"/>
+          <!-- Buildings -->
+          <rect x="20" y="20" width="40" height="50" rx="4" fill="#DCEDC8" opacity="0.6"/>
+          <rect x="70" y="30" width="30" height="40" rx="4" fill="#DCEDC8" opacity="0.6"/>
+          <rect x="300" y="20" width="50" height="60" rx="4" fill="#DCEDC8" opacity="0.6"/>
+          <rect x="310" y="420" width="40" height="50" rx="4" fill="#DCEDC8" opacity="0.6"/>
+          <rect x="20" y="480" width="60" height="70" rx="4" fill="#DCEDC8" opacity="0.6"/>
+        </svg>
+
+        <!-- Location toggle -->
+        <div class="loc-toggle" onclick="toggleLocation()" id="loc-toggle">
+          <div class="loc-dot" id="loc-dot"></div>
+          <span id="loc-text">Location On</span>
+        </div>
+
+        <!-- My dog bubble -->
+        <div class="dog-bubble me" style="top:38%;left:42%" onclick="showToast('This is you and Bella 🐾')">
+          🐕
+          <div class="bubble-label">Bella · Me</div>
+        </div>
+
+        <!-- Nearby dog bubbles -->
+        <div class="dog-bubble" style="top:25%;left:22%" onclick="showPreview('Max','Golden Retriever · 3yr · Male','Friendly · Playful','Jake','Near Green Lake Park','🐶','👨')">
+          🐶
+          <div class="bubble-label">Max · 180m</div>
+        </div>
+        <div class="dog-bubble followed" style="top:55%;left:62%" onclick="showPreview('Luna','Husky · 2yr · Female','Energetic · Shy','Emma','Green Lake Park','🐺','👩')">
+          🐺
+          <div class="bubble-label">Luna · 90m</div>
+        </div>
+        <div class="dog-bubble" style="top:18%;left:65%" onclick="showPreview('Cooper','Labrador · 4yr · Male','Calm · Friendly','Mike','North of park','🦮','🧔')">
+          🦮
+          <div class="bubble-label">Cooper · 320m</div>
+        </div>
+        <div class="dog-bubble" style="top:70%;left:28%" onclick="showPreview('Mochi','Shiba Inu · 1yr · Female','Playful · Cuddly','Yuki','South Green Lake','🦊','👩')">
+          🦊
+          <div class="bubble-label">Mochi · 210m</div>
+        </div>
+
+        <!-- Public group pin -->
+        <div class="group-pin" style="top:44%;left:28%" onclick="showGroupModal()">
+          🐾 Morning Crew · 14
+        </div>
+
+        <!-- Paw Party button -->
+        <button class="paw-party-btn" onclick="showPawPartyModal()">
+          🐾 Start a Paw Party
+        </button>
+
+        <!-- Preview card overlay -->
+        <div class="preview-overlay" id="preview-overlay" onclick="closePreview(event)">
+          <div class="preview-card" style="position:relative">
+            <button class="btn-close-preview" onclick="closePreviewBtn()">✕</button>
+            <div class="preview-card-header">
+              <div class="preview-dog-photo" id="prev-emoji">🐶</div>
+              <div class="preview-info">
+                <div class="preview-dog-name" id="prev-name">Max</div>
+                <div class="preview-dog-meta" id="prev-meta">Golden Retriever · 3yr · Male</div>
+                <div class="preview-tags" id="prev-tags">
+                  <span class="preview-tag">Friendly</span>
+                  <span class="preview-tag">Playful</span>
+                </div>
+              </div>
+            </div>
+            <div class="preview-owner">
+              <div class="owner-avatar" id="prev-owner-emoji">👨</div>
+              <div>
+                <div class="owner-name" id="prev-owner">Jake</div>
+                <div class="owner-location" id="prev-loc">Near Green Lake Park</div>
+              </div>
+            </div>
+            <div class="preview-actions">
+              <button class="btn-follow" onclick="doFollow()">+ Follow</button>
+              <button class="btn-sayhi" onclick="openChat()">Say Hi 👋</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paw Party Modal -->
+        <div class="modal-overlay" id="pawparty-modal" onclick="closePawPartyModal(event)">
+          <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-title">🐾 Start a Paw Party</div>
+            <div class="modal-sub">Invite nearby dogs for a group walk right now</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px">Invite radius:</div>
+            <div class="radius-options">
+              <div class="radius-opt" onclick="selectRadius(this)">0.3mi</div>
+              <div class="radius-opt selected" onclick="selectRadius(this)">0.5mi</div>
+              <div class="radius-opt" onclick="selectRadius(this)">1mi</div>
+              <div class="radius-opt" onclick="selectRadius(this)">3mi</div>
+            </div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:16px">4 dogs nearby · all will receive an opt-in invite</div>
+            <button class="modal-btn" onclick="launchPawParty()">Send Invites 🐾</button>
+            <button class="modal-cancel" onclick="closePawPartyModal()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Group Modal -->
+        <div class="modal-overlay" id="group-modal" onclick="closeGroupModal(event)">
+          <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div style="font-size:36px">🐾</div>
+              <div>
+                <div class="modal-title" style="margin-bottom:2px">Green Lake Morning Crew</div>
+                <div class="modal-sub" style="margin-bottom:0">14 members · Daily 8:00 AM</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:-8px;margin-bottom:16px">
+              <span style="font-size:28px">🐕🐶🦮🐺🦊</span>
+            </div>
+            <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
+              A friendly morning walk group at Green Lake. All breeds welcome! We meet at the north entrance.
+            </div>
+            <button class="modal-btn" onclick="showToast('Join request sent! 🐾');closeGroupModal()">Request to Join</button>
+            <button class="modal-cancel" onclick="closeGroupModal()">Maybe Later</button>
+          </div>
+        </div>
+
+        <!-- Search overlay -->
+        <div class="modal-overlay" id="search-modal" onclick="closeSearch(event)">
+          <div class="modal-sheet" style="padding-top:16px">
+            <div class="modal-handle"></div>
+            <div style="font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;color:var(--text);margin-bottom:12px">Find a Dog 🔍</div>
+            <input class="search-input" placeholder="Search by name or breed..." style="margin-bottom:16px">
+            <div style="font-size:12px;font-weight:700;color:var(--text-light);margin-bottom:10px">NEARBY RESULTS</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg);border-radius:12px;cursor:pointer" onclick="showToast('Viewing Max\'s profile...')">
+                <span style="font-size:28px">🐶</span>
+                <div>
+                  <div style="font-weight:700;color:var(--text)">Max</div>
+                  <div style="font-size:12px;color:var(--text-light)">Golden Retriever · 180m away</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg);border-radius:12px;cursor:pointer" onclick="showToast('Viewing Luna\'s profile...')">
+                <span style="font-size:28px">🐺</span>
+                <div>
+                  <div style="font-weight:700;color:var(--text)">Luna</div>
+                  <div style="font-size:12px;color:var(--text-light)">Husky · 90m away</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg);border-radius:12px;cursor:pointer" onclick="showToast('Viewing Mochi\'s profile...')">
+                <span style="font-size:28px">🦊</span>
+                <div>
+                  <div style="font-weight:700;color:var(--text)">Mochi</div>
+                  <div style="font-size:12px;color:var(--text-light)">Shiba Inu · 210m away</div>
+                </div>
+              </div>
+            </div>
+            <button class="modal-cancel" onclick="closeSearch()">Close</button>
+          </div>
+        </div>
+
+      </div><!-- /map-area -->
+    </div>
+
+    <!-- ══════════════════════════════════
+         DISCUSSION SCREEN
+    ══════════════════════════════════ -->
+    <div class="screen" id="screen-disc">
+      <div class="top-bar">
+        <div class="top-title">Discussion</div>
+        <div class="top-icons">
+          <button class="icon-btn" onclick="showSearch()">🔍</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-chip active" onclick="setFilter(this)">All</div>
+        <div class="filter-chip" onclick="setFilter(this)">#intro</div>
+        <div class="filter-chip" onclick="setFilter(this)">#playdate</div>
+        <div class="filter-chip" onclick="setFilter(this)">#health</div>
+        <div class="filter-chip" onclick="setFilter(this)">#gear</div>
+        <div class="filter-chip" onclick="setFilter(this)">#training</div>
+        <div class="filter-chip" onclick="setFilter(this)">#lostfound</div>
+      </div>
+
+      <div class="scroll-content">
+        <!-- Lost & Found pinned -->
+        <div class="lost-banner" onclick="openPost('lost')">
+          <div class="lost-banner-top">
+            <span class="lost-badge">🚨 PINNED</span>
+            <span class="lost-title">Lost white Bichon near Overlake</span>
+          </div>
+          <div class="lost-sub">2yr female, orange collar · reported 1hr ago · tap to help</div>
+        </div>
+
+        <!-- Posts -->
+        <div class="post-card" onclick="openPost('intro')">
+          <div class="post-header">
+            <div class="post-avatar">🐺</div>
+            <div class="post-meta">
+              <div class="post-dog-name">Luna</div>
+              <div class="post-time">20 min ago · Green Lake</div>
+            </div>
+            <span class="post-tag-chip">#intro</span>
+          </div>
+          <div class="post-text">Hi neighbors! Luna and I just moved to the Green Lake area 🏡 She's a 2yr Husky who LOVES other dogs. Looking for morning walk buddies around 7-8am. Anyone interested?</div>
+          <div class="post-footer">
+            <div class="post-action">❤️ 12</div>
+            <div class="post-action">💬 8 comments</div>
+            <div class="post-action">🔖 Save</div>
+          </div>
+        </div>
+
+        <div class="post-card" onclick="openPost('playdate')">
+          <div class="post-header">
+            <div class="post-avatar">🦮</div>
+            <div class="post-meta">
+              <div class="post-dog-name">Cooper</div>
+              <div class="post-time">1hr ago · Marymoor Park</div>
+            </div>
+            <span class="post-tag-chip">#playdate</span>
+          </div>
+          <div class="post-text">Organizing a Saturday group walk at Marymoor this weekend! 10am at the main entrance. All sizes welcome 🐕 Comment or DM to join our group chat.</div>
+          <div class="post-footer">
+            <div class="post-action">❤️ 24</div>
+            <div class="post-action">💬 15 comments</div>
+            <div class="post-action">🔖 Save</div>
+          </div>
+        </div>
+
+        <div class="post-card" onclick="openPost('health')">
+          <div class="post-header">
+            <div class="post-avatar">🐶</div>
+            <div class="post-meta">
+              <div class="post-dog-name">Max</div>
+              <div class="post-time">2hr ago</div>
+            </div>
+            <span class="post-tag-chip">#health</span>
+          </div>
+          <div class="post-text">Max has been scratching his ears a lot lately. Any Golden Retriever owners experienced this? Worth a vet visit or is it seasonal allergies? 🏥</div>
+          <div class="post-footer">
+            <div class="post-action">❤️ 7</div>
+            <div class="post-action">💬 19 comments</div>
+            <div class="post-action">🔖 Save</div>
+          </div>
+        </div>
+
+        <div class="post-card" onclick="openPost('gear')">
+          <div class="post-header">
+            <div class="post-avatar">🦊</div>
+            <div class="post-meta">
+              <div class="post-dog-name">Mochi</div>
+              <div class="post-time">3hr ago</div>
+            </div>
+            <span class="post-tag-chip">#gear</span>
+          </div>
+          <div class="post-img">🎒</div>
+          <div class="post-text">Finally found a harness that works for Mochi's narrow chest! Ruffwear Front Range — highly recommend for Shibas and other narrow breeds 🙌</div>
+          <div class="post-footer">
+            <div class="post-action">❤️ 31</div>
+            <div class="post-action">💬 6 comments</div>
+            <div class="post-action">🔖 Save</div>
+          </div>
+        </div>
+
+        <div class="post-card" onclick="openPost('training')">
+          <div class="post-header">
+            <div class="post-avatar">🐕</div>
+            <div class="post-meta">
+              <div class="post-dog-name">Buddy</div>
+              <div class="post-time">5hr ago</div>
+            </div>
+            <span class="post-tag-chip">#training</span>
+          </div>
+          <div class="post-text">Week 3 of recall training and Buddy finally came back on the first call at the off-leash area! 🎉 The long line method really works. Happy to share tips!</div>
+          <div class="post-footer">
+            <div class="post-action">❤️ 44</div>
+            <div class="post-action">💬 11 comments</div>
+            <div class="post-action">🔖 Save</div>
+          </div>
+        </div>
+
+        <div style="height:80px"></div>
+      </div>
+
+      <!-- FAB -->
+      <button class="fab" onclick="showToast('Opening post composer... ✏️')">✏️</button>
+
+      <!-- Post detail -->
+      <div class="post-detail" id="post-detail">
+        <div class="detail-top">
+          <span class="back-btn" onclick="closePost()">←</span>
+          <span class="detail-title" id="detail-title">Post</span>
+        </div>
+        <div class="scroll-content" id="detail-content" style="padding:16px"></div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════
+         PROFILE SCREEN
+    ══════════════════════════════════ -->
+    <div class="screen" id="screen-profile">
+      <div class="top-bar">
+        <div class="top-title">Profile</div>
+        <div class="top-icons">
+          <button class="icon-btn" onclick="switchToMessages()">✉️</button>
+          <button class="icon-btn" onclick="showToast('Settings')">⚙️</button>
+        </div>
+      </div>
+
+      <div class="scroll-content">
+        <div class="profile-hero">
+          <div class="profile-top">
+            <div class="profile-photo">🐕</div>
+            <div class="profile-info">
+              <div class="profile-dog-name">Bella</div>
+              <div class="profile-breed">Golden Retriever · 2yr · Female</div>
+              <div class="profile-tags">
+                <span class="profile-tag">Friendly</span>
+                <span class="profile-tag">Playful</span>
+                <span class="profile-tag">Cuddly</span>
+              </div>
+            </div>
+          </div>
+          <div class="profile-owner-row">
+            <div class="profile-owner-avatar">😊</div>
+            <div>
+              <div class="profile-owner-name">Sarah · Owner</div>
+            </div>
+            <div class="profile-owner-sub">📍 Green Lake, Seattle</div>
+          </div>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="stat-num">24</div>
+            <div class="stat-label">Posts</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-num">142</div>
+            <div class="stat-label">Followers</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-num">89</div>
+            <div class="stat-label">Following</div>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn-edit" onclick="showToast('Edit profile')">Edit Profile</button>
+          <button class="btn-msg" onclick="switchToMessages()">✉️</button>
+        </div>
+
+        <div class="photo-grid">
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🌳</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🏃</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">😴</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🎾</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🌊</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🍃</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🐾</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">☀️</div>
+          <div class="photo-cell" onclick="showToast('Viewing post 🐾')">🌧️</div>
+        </div>
+
+        <div style="height:80px"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         MESSAGES SCREEN
+    ══════════════════════════════════ -->
+    <div class="screen" id="screen-msg">
+      <div class="top-bar">
+        <div class="top-title">Messages</div>
+      </div>
+
+      <div class="scroll-content">
+        <!-- Message request -->
+        <div class="msg-request-banner" onclick="showToast('2 message requests from new dogs 🐾')">
+          <div class="msg-request-left">
+            <div class="msg-request-badge">2</div>
+            <div>
+              <div class="msg-request-text">Message Requests</div>
+              <div class="msg-request-sub">2 dogs want to say hi</div>
+            </div>
+          </div>
+          <div class="msg-request-arrow">›</div>
+        </div>
+
+        <!-- Conversations -->
+        <div class="msg-item" onclick="openChat()">
+          <div class="msg-avatar">🐺</div>
+          <div class="msg-meta">
+            <div class="msg-name">Luna</div>
+            <div class="msg-preview">Hey! We'd love to join the morning walk 🐾</div>
+          </div>
+          <div class="msg-right">
+            <div class="msg-time">now</div>
+            <div class="unread-badge">2</div>
+          </div>
+        </div>
+
+        <div class="msg-item" onclick="openGroupChat()">
+          <div class="msg-avatar group">🐾</div>
+          <div class="msg-meta">
+            <div class="msg-name">Green Lake Morning Crew</div>
+            <div class="msg-preview">Cooper: See everyone at 8am! ☀️</div>
+          </div>
+          <div class="msg-right">
+            <div class="msg-time">10m</div>
+            <div class="unread-badge">5</div>
+          </div>
+        </div>
+
+        <div class="msg-item" onclick="showToast('Opening chat with Max...')">
+          <div class="msg-avatar">🐶</div>
+          <div class="msg-meta">
+            <div class="msg-name">Max</div>
+            <div class="msg-preview">Same park tomorrow? Max loves chasing Bella 😄</div>
+          </div>
+          <div class="msg-right">
+            <div class="msg-time">1hr</div>
+          </div>
+        </div>
+
+        <div class="msg-item" onclick="showToast('Opening chat with Mochi...')">
+          <div class="msg-avatar">🦊</div>
+          <div class="msg-meta">
+            <div class="msg-name">Mochi</div>
+            <div class="msg-preview">Thanks for the harness rec! Ordering now</div>
+          </div>
+          <div class="msg-right">
+            <div class="msg-time">3hr</div>
+          </div>
+        </div>
+
+        <div class="msg-item" onclick="showToast('Opening Paw Party group...')">
+          <div class="msg-avatar group">🐕</div>
+          <div class="msg-meta">
+            <div class="msg-name">Saturday Marymoor Walk</div>
+            <div class="msg-preview">You: Count us in! See you at 10 🎉</div>
+          </div>
+          <div class="msg-right">
+            <div class="msg-time">yesterday</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat screen (DM) -->
+      <div class="chat-screen" id="chat-dm">
+        <div class="chat-top">
+          <span class="back-btn" onclick="closeChat('chat-dm')">←</span>
+          <div class="msg-avatar" style="width:36px;height:36px;font-size:20px">🐺</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;color:var(--text)">Luna</div>
+            <div style="font-size:11px;color:var(--green)">● Active now</div>
+          </div>
+        </div>
+        <div class="chat-messages">
+          <div class="chat-bubble them">Hey! I saw your post about morning walks 🐾 Luna would love to join!</div>
+          <div class="chat-bubble me">That's awesome! Bella would love the company 🐕</div>
+          <div class="chat-bubble them">What time do you usually head out? We're free most mornings</div>
+          <div class="chat-bubble me">Usually around 7:30am at the north entrance of Green Lake</div>
+          <div class="chat-bubble them">Perfect! We'll be there tomorrow. Should I join the group chat too?</div>
+          <div class="chat-bubble me">Yes! I'll add you to the Morning Crew group 🎉</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" placeholder="Message Luna...">
+          <button class="chat-send" onclick="showToast('Message sent! 📨')">↑</button>
+        </div>
+      </div>
+
+      <!-- Group chat -->
+      <div class="chat-screen" id="chat-group">
+        <div class="chat-top">
+          <span class="back-btn" onclick="closeChat('chat-group')">←</span>
+          <div class="msg-avatar group" style="width:36px;height:36px;font-size:20px">🐾</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;color:var(--text)">Green Lake Morning Crew</div>
+            <div style="font-size:11px;color:var(--text-light)">14 members</div>
+          </div>
+        </div>
+        <div class="chat-messages">
+          <div style="text-align:center;font-size:11px;color:var(--text-light);padding:4px 0">Today</div>
+          <div class="chat-bubble them"><strong>Cooper:</strong> Weather looks great for tomorrow! ☀️</div>
+          <div class="chat-bubble them"><strong>Max:</strong> We'll be there! Max has been restless all week 😂</div>
+          <div class="chat-bubble me">Bella is so ready. See everyone at 8am! 🐕</div>
+          <div class="chat-bubble them"><strong>Mochi:</strong> Coming too! Bringing some dog treats to share 🍖</div>
+          <div class="chat-bubble them"><strong>Cooper:</strong> See everyone at 8am! ☀️</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" placeholder="Message the group...">
+          <button class="chat-send" onclick="showToast('Message sent! 📨')">↑</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════
+         BOTTOM NAV (hidden during onboarding)
+    ══════════════════════════════════ -->
+    <div class="bottom-nav" id="bottom-nav" style="display:none">
+      <div class="nav-item active" id="nav-map" onclick="switchTab('map')">
+        <div class="nav-icon-wrap">
+          <div class="nav-icon">🗺️</div>
+        </div>
+        <div class="nav-label">Map</div>
+      </div>
+      <div class="nav-item" id="nav-disc" onclick="switchTab('disc')">
+        <div class="nav-icon-wrap">
+          <div class="nav-icon">🏘️</div>
+        </div>
+        <div class="nav-label">Discussion</div>
+      </div>
+      <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+        <div class="nav-icon-wrap">
+          <div class="nav-icon">🐾</div>
+        </div>
+        <div class="nav-label">Profile</div>
+      </div>
+      <div class="nav-item" id="nav-msg" onclick="switchToMessages()">
+        <div class="nav-icon-wrap" style="position:relative">
+          <div class="nav-icon">✉️</div>
+          <div class="nav-badge">7</div>
+        </div>
+        <div class="nav-label">Messages</div>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+</div><!-- /phone -->
+
+<script>
+  let currentCard = 0;
+  const cards = [
+    { emoji: '🗺️', title: "See who's walking near Bella", desc: "Turn on your location when you're out and discover dogs in your neighborhood in real time." },
+    { emoji: '🏘️', title: "Your local dog community", desc: "Ask questions, find playdates, share tips — all from dogs in your area." },
+    { emoji: '🐾', title: "Meet dogs. Make friends.", desc: "Say hi to dogs you meet on the map, build your walk crew, and make real neighborhood connections." }
+  ];
+
+  function goToCards() {
+    document.getElementById('screen-onboarding').classList.remove('active');
+    document.getElementById('screen-cards').classList.add('active');
+  }
+
+  function nextCard() {
+    currentCard++;
+    if (currentCard >= cards.length) { enterApp(); return; }
+    const c = cards[currentCard];
+    document.getElementById('card-content').innerHTML = `
+      <div class="card-emoji">${c.emoji}</div>
+      <div class="card-title">${c.title}</div>
+      <div class="card-desc">${c.desc}</div>
+    `;
+    document.querySelectorAll('.card-dot').forEach((d, i) => {
+      d.classList.toggle('active', i <= currentCard);
+    });
+    if (currentCard === cards.length - 1) {
+      document.getElementById('card-next-btn').textContent = 'Get Started 🐾';
+    }
+  }
+
+  function enterApp() {
+    document.getElementById('screen-cards').classList.remove('active');
+    document.getElementById('screen-map').classList.add('active');
+    document.getElementById('bottom-nav').style.display = 'flex';
+  }
+
+  function switchTab(tab) {
+    ['map','disc','profile','msg'].forEach(t => {
+      document.getElementById('screen-' + t).classList.remove('active');
+      const nav = document.getElementById('nav-' + t);
+      if (nav) nav.classList.remove('active');
+    });
+    document.getElementById('screen-' + tab).classList.add('active');
+    const nav = document.getElementById('nav-' + tab);
+    if (nav) nav.classList.add('active');
+  }
+
+  function switchToMessages() {
+    switchTab('msg');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('nav-msg').classList.add('active');
+  }
+
+  let locOn = true;
+  function toggleLocation() {
+    locOn = !locOn;
+    document.getElementById('loc-dot').style.background = locOn ? 'var(--green-light)' : '#ccc';
+    document.getElementById('loc-text').textContent = locOn ? 'Location On' : 'Location Off';
+    document.querySelectorAll('.dog-bubble:not(.me)').forEach(b => {
+      b.style.display = locOn ? 'flex' : 'none';
+    });
+    document.querySelectorAll('.group-pin').forEach(p => {
+      p.style.display = locOn ? 'flex' : 'none';
+    });
+    showToast(locOn ? 'Location turned on 📍' : 'Location turned off');
+  }
+
+  function showPreview(name, meta, tags, owner, loc, dogEmoji, ownerEmoji) {
+    document.getElementById('prev-name').textContent = name;
+    document.getElementById('prev-meta').textContent = meta;
+    document.getElementById('prev-emoji').textContent = dogEmoji;
+    document.getElementById('prev-owner-emoji').textContent = ownerEmoji;
+    document.getElementById('prev-owner').textContent = owner;
+    document.getElementById('prev-loc').textContent = loc;
+    document.getElementById('prev-tags').innerHTML = tags.split(' · ').map(t => `<span class="preview-tag">${t}</span>`).join('');
+    document.getElementById('preview-overlay').classList.add('active');
+  }
+
+  function closePreview(e) {
+    if (e.target === document.getElementById('preview-overlay')) {
+      document.getElementById('preview-overlay').classList.remove('active');
+    }
+  }
+
+  function closePreviewBtn() {
+    document.getElementById('preview-overlay').classList.remove('active');
+  }
+
+  function doFollow() {
+    const name = document.getElementById('prev-name').textContent;
+    showToast(`Following ${name}! 🐾`);
+    document.getElementById('preview-overlay').classList.remove('active');
+  }
+
+  function openChat() {
+    document.getElementById('preview-overlay').classList.remove('active');
+    switchToMessages();
+    setTimeout(() => {
+      document.getElementById('chat-dm').classList.add('active');
+    }, 100);
+  }
+
+  function openGroupChat() {
+    document.getElementById('chat-group').classList.add('active');
+  }
+
+  function closeChat(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function showPawPartyModal() {
+    document.getElementById('pawparty-modal').classList.add('active');
+  }
+
+  function closePawPartyModal(e) {
+    if (!e || e.target === document.getElementById('pawparty-modal')) {
+      document.getElementById('pawparty-modal').classList.remove('active');
+    }
+  }
+
+  function selectRadius(el) {
+    document.querySelectorAll('.radius-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function launchPawParty() {
+    document.getElementById('pawparty-modal').classList.remove('active');
+    showToast('Paw Party invites sent to 4 nearby dogs! 🐾');
+  }
+
+  function showGroupModal() {
+    document.getElementById('group-modal').classList.add('active');
+  }
+
+  function closeGroupModal(e) {
+    if (!e || e.target === document.getElementById('group-modal')) {
+      document.getElementById('group-modal').classList.remove('active');
+    }
+  }
+
+  function showSearch() {
+    document.getElementById('search-modal').classList.add('active');
+  }
+
+  function closeSearch(e) {
+    if (!e || e.target === document.getElementById('search-modal')) {
+      document.getElementById('search-modal').classList.remove('active');
+    }
+  }
+
+  function showMsg() { switchToMessages(); }
+
+  function setFilter(el) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  const postData = {
+    intro: { title: "Luna's Intro", content: `<div class="post-card" style="margin:0 0 12px"><div class="post-header"><div class="post-avatar">🐺</div><div class="post-meta"><div class="post-dog-name">Luna</div><div class="post-time">20 min ago · Green Lake</div></div><span class="post-tag-chip">#intro</span></div><div class="post-text">Hi neighbors! Luna and I just moved to the Green Lake area 🏡 She's a 2yr Husky who LOVES other dogs. Looking for morning walk buddies around 7-8am. Anyone interested?</div><div class="post-footer"><div class="post-action">❤️ 12</div><div class="post-action">💬 8</div></div></div><div style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px">Comments</div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px"><span style="font-size:20px">🐕</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Bella</div><div style="font-size:13px;color:var(--text)">Welcome to the neighborhood! We walk Green Lake every morning, you should join us 🐾</div></div></div><div style="display:flex;gap:10px"><span style="font-size:20px">🐶</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Max</div><div style="font-size:13px;color:var(--text)">Max would love a Husky friend! DM us 😊</div></div></div></div><button style="width:100%;margin-top:16px;padding:12px;background:var(--green);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer" onclick="showToast('Opening DM with Luna...')">DM Luna 🐾</button>` },
+    lost: { title: "🚨 Lost Pet Alert", content: `<div style="background:#FFF3CD;border-radius:16px;padding:16px;margin-bottom:16px;border-left:4px solid #F4A261"><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:6px">Lost: White Bichon Frise</div><div style="font-size:13px;color:var(--text)">2yr female · Orange collar with bell<br>Last seen near Overlake, Redmond<br>Reported 1 hour ago</div></div><div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:16px">She got out when our gate was left open. Very friendly, responds to "Coco". Please contact immediately if seen 🙏</div><div style="display:flex;gap:10px"><button style="flex:1;padding:12px;background:#F4A261;color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer" onclick="showToast('Sharing alert with nearby users 📢')">📢 Share Alert</button><button style="flex:1;padding:12px;background:var(--green);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer" onclick="showToast('Contacting owner...')">📞 I Found Her!</button></div>` },
+    playdate: { title: "Saturday Marymoor Walk", content: `<div class="post-card" style="margin:0 0 12px"><div class="post-header"><div class="post-avatar">🦮</div><div class="post-meta"><div class="post-dog-name">Cooper</div><div class="post-time">1hr ago · Marymoor Park</div></div><span class="post-tag-chip">#playdate</span></div><div class="post-text">Organizing a Saturday group walk at Marymoor this weekend! 10am at the main entrance. All sizes welcome 🐕 Comment or DM to join our group chat.</div></div><div style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px">15 Comments</div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px"><span style="font-size:20px">🐺</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Luna</div><div style="font-size:13px;color:var(--text)">We're in! Luna needs a good run 🏃</div></div></div><div style="display:flex;gap:10px"><span style="font-size:20px">🦊</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Mochi</div><div style="font-size:13px;color:var(--text)">Count us in! Mochi loves Marymoor 🎾</div></div></div></div><button style="width:100%;margin-top:16px;padding:12px;background:var(--green);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer" onclick="showToast('Joined the group chat! 🐾')">Join Group Chat</button>` },
+    health: { title: "Max's Health Question", content: `<div class="post-card" style="margin:0 0 12px"><div class="post-header"><div class="post-avatar">🐶</div><div class="post-meta"><div class="post-dog-name">Max</div><div class="post-time">2hr ago</div></div><span class="post-tag-chip">#health</span></div><div class="post-text">Max has been scratching his ears a lot lately. Any Golden Retriever owners experienced this? Worth a vet visit or is it seasonal allergies? 🏥</div></div><div style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px">19 Comments</div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px"><span style="font-size:20px">🐕</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Bella</div><div style="font-size:13px;color:var(--text)">Bella had this last spring! Turned out to be grass allergies. Our vet recommended an antihistamine. Definitely worth checking out 🏥</div></div></div><div style="display:flex;gap:10px"><span style="font-size:20px">🦊</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Mochi</div><div style="font-size:13px;color:var(--text)">We go to Eastside Vet on Bellevue Way, they're great with allergies!</div></div></div></div>` },
+    gear: { title: "Mochi's Harness Rec", content: `<div class="post-card" style="margin:0 0 12px"><div class="post-header"><div class="post-avatar">🦊</div><div class="post-meta"><div class="post-dog-name">Mochi</div><div class="post-time">3hr ago</div></div><span class="post-tag-chip">#gear</span></div><div class="post-img">🎒</div><div class="post-text">Finally found a harness that works for Mochi's narrow chest! Ruffwear Front Range — highly recommend for Shibas and other narrow breeds 🙌</div></div><div style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px">6 Comments</div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px"><span style="font-size:20px">🐶</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Max</div><div style="font-size:13px;color:var(--text)">Which size did you get? Max is between sizes</div></div></div><div style="display:flex;gap:10px"><span style="font-size:20px">🦊</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Mochi</div><div style="font-size:13px;color:var(--text)">Got the XS! Measure the chest girth, that's what matters most for this one</div></div></div></div>` },
+    training: { title: "Buddy's Training Win", content: `<div class="post-card" style="margin:0 0 12px"><div class="post-header"><div class="post-avatar">🐕</div><div class="post-meta"><div class="post-dog-name">Buddy</div><div class="post-time">5hr ago</div></div><span class="post-tag-chip">#training</span></div><div class="post-text">Week 3 of recall training and Buddy finally came back on the first call at the off-leash area! 🎉 The long line method really works. Happy to share tips!</div></div><div style="font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px">11 Comments</div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px"><span style="font-size:20px">🐕</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Bella</div><div style="font-size:13px;color:var(--text)">Please share the tips!! Bella is terrible at recall 😅</div></div></div><div style="display:flex;gap:10px"><span style="font-size:20px">🐕</span><div style="background:white;border-radius:12px;padding:10px;border:1px solid var(--border);flex:1"><div style="font-size:12px;font-weight:700;color:var(--green)">Buddy</div><div style="font-size:13px;color:var(--text)">Sure! Start with a 20ft long line, high value treats only, and practice in low distraction areas first. DM me for the full routine!</div></div></div></div>` }
+  };
+
+  function openPost(type) {
+    const data = postData[type];
+    if (!data) return;
+    document.getElementById('detail-title').textContent = data.title;
+    document.getElementById('detail-content').innerHTML = data.content;
+    document.getElementById('post-detail').classList.add('active');
+  }
+
+  function closePost() {
+    document.getElementById('post-detail').classList.remove('active');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    clearTimeout(toastTimer);
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = msg;
+    toast.classList.remove('active');
+    void toast.offsetWidth;
+    toast.classList.add('active');
+    toastTimer = setTimeout(() => toast.classList.remove('active'), 3000);
+  }
+</script>
+</body>
+</html>
